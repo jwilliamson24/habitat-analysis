@@ -11,7 +11,7 @@
 ## settings -----------------------------------------------------------------------------------------------
     
     rm(list=ls())
-    setwd("~/Library/CloudStorage/OneDrive-Personal/Documents/Academic/OSU/Git/habitat-analysis/code")
+    setwd("~/Library/CloudStorage/OneDrive-Personal/Documents/Academic/OSU/Git/oss-occu/data")
 
     library(randomForest)
     library(ggplot2)
@@ -19,7 +19,7 @@
 ## load data--------------------------------------------------------------------------------------------------
 
 # site-level data
-    dat <- readRDS("~/Library/CloudStorage/OneDrive-Personal/Documents/Academic/OSU/Git/oss-occu/data/site_level_matrix.rds")
+    dat <- readRDS("site_level_matrix.rds")
     row.names(dat) <- dat[,1]
     
     sals <- dat[26:27]
@@ -33,7 +33,13 @@
     #took out elevation, jul date (we already know theyre elevationally/temporally specific) 
     drop <- c("jul_date","elev")
     env_subset <- env_cont[,!(colnames(env_cont) %in% drop)]
-
+    
+    #add extra downed wood metrics to env subset
+    dwd_extra <- read.csv("dwd.extra.metrics.csv")
+    dwdsub <- dwd_extra[,c("dwd_dens","log_dens","stump_dens","avg_volume")]
+    env_subset_dwd <- cbind(env_subset, dwdsub)
+    
+    
 # sal presences absence
     oss_PA <- ifelse(sals$oss > 0, "Present", "Absent")
     enes_PA <- ifelse(sals$enes > 0, "Present", "Absent")
@@ -52,10 +58,13 @@
 #subset of variables
     oss.forest.sub <- randomForest(as.factor(oss_PA) ~ ., data=env_subset, ntree = 5000, mtry = 5, 
                                importance=TRUE, keep.forest=FALSE, na.action=na.omit)
-    
-## full variables plot -----------------------------------------------------------------------------------------------------
 
-#with full variables
+#subset with extra dwd metrics
+    oss.forest.subdwd <- randomForest(as.factor(oss_PA) ~ ., data=env_subset_dwd, ntree = 5000, mtry = 5, 
+                                   importance=TRUE, keep.forest=FALSE, na.action=na.omit)  
+## plot - all variables -----------------------------------------------------------------------------------------------------
+
+#with all variables
     varImpPlot(oss.forest)
     
     ossForestData <- as.data.frame(importance(oss.forest))
@@ -92,7 +101,7 @@ ggsave(filename = "oss_varimp.png", plot = p1, device = "png",
        path = "~/Library/CloudStorage/OneDrive-Personal/Documents/Academic/OSU/Git/habitat-analysis/figures/randomforest")
 
 
-## subset variables plot --------------------------------------------------------------------------------------------------------
+## plot - subset variables  --------------------------------------------------------------------------------------------------------
     
     ossForestData.sub <- as.data.frame(importance(oss.forest.sub))
     ossForestData.sub <- ossForestData.sub[order(ossForestData.sub[,1]),]
@@ -128,6 +137,41 @@ ggsave(filename = "oss_varimp_subset.png", plot = p2, device = "png",
            path = "~/Library/CloudStorage/OneDrive-Personal/Documents/Academic/OSU/Git/habitat-analysis/figures/randomforest")
  
 
+## plot - subset with dwd  --------------------------------------------------------------------------------------------------------
+
+    ossForestData.subdwd <- as.data.frame(importance(oss.forest.subdwd))
+    ossForestData.subdwd <- ossForestData.subdwd[order(ossForestData.subdwd[,1]),]
+    ossForestData.subdwd$Var.Names <- row.names(ossForestData.subdwd)
+    colnames(ossForestData.subdwd) <- c("Absent","Present","MeanDec","IncNodePurity","Var.Names")
+    
+    #ggplot     
+    p5 <- ggplot(ossForestData.subdwd, aes(x = Var.Names, y = MeanDec)) +
+      geom_segment(aes(x = Var.Names, xend = Var.Names, y = 0, yend = MeanDec, 
+                       color = ifelse(MeanDec > 15, ">15", 
+                                      ifelse(MeanDec >= 10, "10-15", "<10"))), 
+                   show.legend = FALSE) +
+      geom_point(aes(size = IncNodePurity, 
+                     color = ifelse(MeanDec > 15, ">15", 
+                                    ifelse(MeanDec >= 10, "10-15", "<10"))), 
+                 alpha = 0.6) +
+      theme_light() +
+      coord_flip() +
+      scale_color_manual(values = c(">15" = "blue", "10-15" = "#66C2A5", "<10" = "#FFD700")) +
+      labs(color = "Range", size = "Node Purity") +
+      theme(
+        text = element_text(size = 20)
+      ) +
+      labs(
+        title = "Variable Importance from Random Forest Model - OSS",
+        x = "Environmental Variables",
+        y = "Mean Decrease in Accuracy",
+        size = "Node Purity"
+      )
+
+
+ggsave(filename = "oss_varimp_subset_dwd.png", plot = p5, device = "png",
+       path = "~/Library/CloudStorage/OneDrive-Personal/Documents/Academic/OSU/Git/habitat-analysis/figures/randomforest")
+
    
 ## enes random forest --------------------------------------------------------------------------------------------------
     
@@ -143,8 +187,12 @@ ggsave(filename = "oss_varimp_subset.png", plot = p2, device = "png",
 #subset of variables
     enes.forest.sub <- randomForest(as.factor(enes_PA) ~ ., data=env_subset, ntree = 5000, mtry = 5, 
                                    importance=TRUE, keep.forest=FALSE, na.action=na.omit)
+
+#subset with extra dwd metrics
+    enes.forest.subdwd <- randomForest(as.factor(enes_PA) ~ ., data=env_subset_dwd, ntree = 5000, mtry = 5, 
+                                      importance=TRUE, keep.forest=FALSE, na.action=na.omit)  
     
-## full variables plot ------------------------------------------------------------------------------------------------
+## plot - all variables ------------------------------------------------------------------------------------------------
     
     varImpPlot(enes.forest)
     
@@ -184,7 +232,7 @@ ggsave(filename = "enes_varimp.png", plot = p3, device = "png",
   
 
   
-## subset variables plot -----------------------------------------------------------------------------------------------------
+## plot - subset variables  -----------------------------------------------------------------------------------------------------
 
     enesForestData.sub <- as.data.frame(importance(enes.forest.sub))
     enesForestData.sub <- enesForestData.sub[order(enesForestData.sub[,1]),]
@@ -219,5 +267,39 @@ ggsave(filename = "enes_varimp.png", plot = p3, device = "png",
 ggsave(filename = "enes_varimp_subset.png", plot = p4, device = "png",
            path = "~/Library/CloudStorage/OneDrive-Personal/Documents/Academic/OSU/Git/habitat-analysis/figures/randomforest")
     
+## plot - subset with dwd  --------------------------------------------------------------------------------------------------------
+
+    enesForestData.subdwd <- as.data.frame(importance(enes.forest.subdwd))
+    enesForestData.subdwd <- enesForestData.subdwd[order(enesForestData.subdwd[,1]),]
+    enesForestData.subdwd$Var.Names <- row.names(enesForestData.subdwd)
+    colnames(enesForestData.subdwd) <- c("Absent","Present","MeanDec","IncNodePurity","Var.Names")
     
+    #ggplot     
+    p6 <- ggplot(enesForestData.subdwd, aes(x = Var.Names, y = MeanDec)) +
+      geom_segment(aes(x = Var.Names, xend = Var.Names, y = 0, yend = MeanDec, 
+                       color = ifelse(MeanDec > 15, ">15", 
+                                      ifelse(MeanDec >= 10, "10-15", "<10"))), 
+                   show.legend = FALSE) +
+      geom_point(aes(size = IncNodePurity, 
+                     color = ifelse(MeanDec > 15, ">15", 
+                                    ifelse(MeanDec >= 10, "10-15", "<10"))), 
+                 alpha = 0.6) +
+      theme_light() +
+      coord_flip() +
+      scale_color_manual(values = c(">15" = "blue", "10-15" = "#66C2A5", "<10" = "#FFD700")) +
+      labs(color = "Range", size = "Node Purity") +
+      theme(
+        text = element_text(size = 20)
+      ) +
+      labs(
+        title = "Variable Importance from Random Forest Model - enes",
+        x = "Environmental Variables",
+        y = "Mean Decrease in Accuracy",
+        size = "Node Purity"
+      )
+
+
+ggsave(filename = "enes_varimp_subset_dwd.png", plot = p6, device = "png",
+       path = "~/Library/CloudStorage/OneDrive-Personal/Documents/Academic/OSU/Git/habitat-analysis/figures/randomforest")
+
     

@@ -43,14 +43,18 @@
     dwd_extra <- read.csv("dwd.extra.metrics.csv")
     dwdsub <- dwd_extra[,c("dwd_dens","log_dens","stump_dens","avg_volume")]
     env_subset_dwd <- cbind(env_subset, dwdsub)
+
+    #load env df that was checked for correlations
+    env_subset_corr <- read.csv("env_subset_corr.csv")
     
     # sal presences absence
     oss_PA <- ifelse(sals$oss > 0, "Present", "Absent")
     enes_PA <- ifelse(sals$enes > 0, "Present", "Absent")
     
    
-## oss classification tree --------------------------------------------------------------------------------------------------
-
+## oss classification trees  ---------------------------------------------------------------------------
+## these options not used in final report
+    
 ## using all continuous env variables
     set.seed(123) # set seed for plotcp function
     oss.tree <- rpart(oss_PA ~ ., data=env_cont, minsplit=2, xval=10) #upping xval to 10 or 20 didnt help the pruning step
@@ -106,6 +110,33 @@
 
     #save
     png(filename = "~/Library/CloudStorage/OneDrive-Personal/Documents/Academic/OSU/Git/habitat-analysis/figures/classificationtree/oss_classtree_subdwd.png",
+        width = 1200, height = 1000, res = 150)
+    rpart.plot(oss.tree.sub.prune2) 
+    dev.off()
+    
+#### final oss tree -------------------------------------------------------------------------------
+# using subset env data checked for correlations 
+    
+    set.seed(123)
+    oss.tree.sub3 <- rpart(oss_PA ~ ., data=env_subset_corr, minsplit=2, xval=10)
+    rpart.plot(oss.tree.sub3)
+    plotcp(oss.tree.sub3)
+    printcp(oss.tree.sub3)
+    
+    # Get the best CP based on the 1-SE rule
+    # min_xerror <- min(oss.tree.sub2$cptable[, "xerror"])
+    # best_cp <- oss.tree.sub2$cptable[oss.tree.sub2$cptable[, "xerror"] <= min_xerror + oss.tree.sub2$cptable[, "xstd"], "CP"][1]
+    
+    #prune
+    #the above method gave a CP that was too high and the tree was 
+    #just the root node with no splits; i chose the CP with the lowest xerror,
+    #but it is now overfitting to some extent
+    oss.tree.sub.prune3 <- prune(oss.tree.sub3, 0.03)
+    rpart.plot(oss.tree.sub.prune3) 
+    printcp(oss.tree.sub.prune3) 
+    
+    #save
+    png(filename = "~/Library/CloudStorage/OneDrive-Personal/Documents/Academic/OSU/Git/habitat-analysis/figures/classificationtree/oss_classtree_0125.png",
         width = 1200, height = 1000, res = 150)
     rpart.plot(oss.tree.sub.prune2) 
     dev.off()

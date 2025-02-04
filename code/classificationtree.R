@@ -2,7 +2,7 @@
 ##
 ## classificationtree.R 
 ##
-## Random forest code, continued effort from multivariate class
+## Continued effort from multivariate class
 ##
 ## Jasmine Williamson
 ## Date Created: 01-16-2025
@@ -21,37 +21,48 @@
     library(rpart)
     library(rpart.plot)
 
-## load data--------------------------------------------------------------------------------------------------
+## load data (old method) -------------------------------------------------------------------------------------
 
-    # site-level data
-    dat <- readRDS("site_level_matrix.rds")
+    # # site-level data
+    # dat <- readRDS("site_level_matrix.rds")
+    # 
+    # sals <- dat[26:27]
+    # env <- dat[1:25]
+    # 
+    # drop <- c("lat","long","stand","tree_farm","landowner","site_id","year","weather")
+    # env <- env[,!(colnames(env) %in% drop)]
+    # 
+    # env_cont <- env[,-1]
+    # 
+    # #take out elevation, jul date, temp (we already know theyre elevationally/temporally specific) 
+    # drop <- c("jul_date","elev","temp")
+    # env_subset <- env_cont[,!(colnames(env_cont) %in% drop)]
+    # 
+    # #add extra downed wood metrics to env subset
+    # dwd_extra <- read.csv("dwd.extra.metrics.csv")
+    # dwdsub <- dwd_extra[,c("dwd_dens","log_dens","stump_dens","avg_volume")]
+    # env_subset_dwd <- cbind(env_subset, dwdsub)
+    # 
+    # #load env df that was checked for correlations
+    # env_subset_corr <- read.csv("env_subset_corr.csv")
+    # 
+    # # sal presences absence
+    # oss_PA <- ifelse(sals$oss > 0, "Present", "Absent")
+    # enes_PA <- ifelse(sals$enes > 0, "Present", "Absent")
+    
+    
+## load data (updated 02/04/2025) ----------------------------------------------------------------------------
+    
+    dat <- read.csv("env_subset_corr.csv")
     row.names(dat) <- dat[,1]
+    dat <- subset(dat, select = -X)
+    env_subset_corr <- dat
     
-    sals <- dat[26:27]
-    env <- dat[1:25]
-    
-    drop <- c("lat","long","stand","tree_farm","landowner","site_id","year","weather")
-    env <- env[,!(colnames(env) %in% drop)]
-    
-    env_cont <- env[,-1]
-    
-    #took out elevation, jul date, temp (we already know theyre elevationally/temporally specific) 
-    drop <- c("jul_date","elev","temp")
-    env_subset <- env_cont[,!(colnames(env_cont) %in% drop)]
-    
-    #add extra downed wood metrics to env subset
-    dwd_extra <- read.csv("dwd.extra.metrics.csv")
-    dwdsub <- dwd_extra[,c("dwd_dens","log_dens","stump_dens","avg_volume")]
-    env_subset_dwd <- cbind(env_subset, dwdsub)
-
-    #load env df that was checked for correlations
-    env_subset_corr <- read.csv("env_subset_corr.csv")
-    
-    # sal presences absence
+    dat2 <- readRDS("site_level_matrix.rds")
+    sals <- dat2[26:27]
     oss_PA <- ifelse(sals$oss > 0, "Present", "Absent")
     enes_PA <- ifelse(sals$enes > 0, "Present", "Absent")
     
-   
 ## oss classification trees  ---------------------------------------------------------------------------
 ## these options not used in final report
     
@@ -124,21 +135,21 @@
     printcp(oss.tree.sub3)
     
     # Get the best CP based on the 1-SE rule
-    # min_xerror <- min(oss.tree.sub2$cptable[, "xerror"])
-    # best_cp <- oss.tree.sub2$cptable[oss.tree.sub2$cptable[, "xerror"] <= min_xerror + oss.tree.sub2$cptable[, "xstd"], "CP"][1]
+    # min_xerror <- min(oss.tree.sub3$cptable[, "xerror"])
+    # best_cp <- oss.tree.sub3$cptable[oss.tree.sub3$cptable[, "xerror"] <= min_xerror + oss.tree.sub3$cptable[, "xstd"], "CP"][1]
     
     #prune
     #the above method gave a CP that was too high and the tree was 
     #just the root node with no splits; i chose the CP with the lowest xerror,
-    #but it is now overfitting to some extent
-    oss.tree.sub.prune3 <- prune(oss.tree.sub3, 0.03)
+    #but it is now likely overfitting to some extent
+    oss.tree.sub.prune3 <- prune(oss.tree.sub3, 0.045)
     rpart.plot(oss.tree.sub.prune3) 
     printcp(oss.tree.sub.prune3) 
     
     #save
-    png(filename = "~/Library/CloudStorage/OneDrive-Personal/Documents/Academic/OSU/Git/habitat-analysis/figures/classificationtree/oss_classtree_0125.png",
+    png(filename = "~/Library/CloudStorage/OneDrive-Personal/Documents/Academic/OSU/Git/habitat-analysis/figures/classificationtree/oss_classtree_0204.png",
         width = 1200, height = 1000, res = 150)
-    rpart.plot(oss.tree.sub.prune2) 
+    rpart.plot(oss.tree.sub.prune3) 
     dev.off()
     
     
@@ -177,7 +188,7 @@
     
 ## subsetted env data with dwd extra metrics
     set.seed(123)
-    enes.tree.sub2 <- rpart(enes_PA ~ ., data=env_subset_dwd, minsplit=2, xval=10)
+    enes.tree.sub2 <- rpart(enes_PA ~ ., data=env_subset_corr, minsplit=2, xval=10)
     rpart.plot(enes.tree.sub2)
     plotcp(enes.tree.sub2)
     printcp(enes.tree.sub2)
@@ -186,11 +197,11 @@
     min_xerror <- min(enes.tree.sub2$cptable[, "xerror"])
     best_cp <- enes.tree.sub2$cptable[enes.tree.sub2$cptable[, "xerror"] <= min_xerror + enes.tree.sub2$cptable[, "xstd"], "CP"][1]
     
-    enes.tree.sub.prune2 <- prune(enes.tree.sub2, 0.0714)
+    enes.tree.sub.prune2 <- prune(enes.tree.sub2, 0.05)
     rpart.plot(enes.tree.sub.prune2) 
     
     #save
-    png(filename = "~/Library/CloudStorage/OneDrive-Personal/Documents/Academic/OSU/Git/habitat-analysis/figures/classificationtree/enes_classtree_subdwd.png",
+    png(filename = "~/Library/CloudStorage/OneDrive-Personal/Documents/Academic/OSU/Git/habitat-analysis/figures/classificationtree/enes_classtree_0204.png",
         width = 1200, height = 1000, res = 150)
     rpart.plot(enes.tree.sub.prune2) 
     dev.off() 

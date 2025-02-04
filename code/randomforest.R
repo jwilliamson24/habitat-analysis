@@ -16,36 +16,50 @@
     library(randomForest)
     library(ggplot2)
  
-## load data--------------------------------------------------------------------------------------------------
+## load data (old method) -------------------------------------------------------------------------------------
 
-# site-level data
-    dat <- readRDS("site_level_matrix.rds")
+#     # site-level data
+#     dat <- readRDS("site_level_matrix.rds")
+#     row.names(dat) <- dat[,1]
+#     
+#     sals <- dat[26:27]
+#     env <- dat[1:25]
+#     
+#     drop <- c("lat","long","stand","tree_farm","landowner","site_id","year","weather")
+#     env <- env[,!(colnames(env) %in% drop)]
+#     
+#     env_cont <- env[,-1]
+#     
+#     #took out elevation, jul date (we already know theyre elevationally/temporally specific) 
+#     drop <- c("jul_date","elev")
+#     env_subset <- env_cont[,!(colnames(env_cont) %in% drop)]
+#     
+#     #add extra downed wood metrics to env subset
+#     dwd_extra <- read.csv("dwd.extra.metrics.csv")
+#     dwdsub <- dwd_extra[,c("dwd_dens","log_dens","stump_dens","avg_volume")]
+#     env_subset_dwd <- cbind(env_subset, dwdsub)
+#     
+#     #load env df that was checked for correlations
+#     env_subset_corr <- read.csv("env_subset_corr.csv")
+#     
+#     
+# # sal presences absence
+#     oss_PA <- ifelse(sals$oss > 0, "Present", "Absent")
+#     enes_PA <- ifelse(sals$enes > 0, "Present", "Absent")
+    
+    
+## load data (updated 02/04/2025) ----------------------------------------------------------------------------
+    
+    dat <- read.csv("env_subset_corr.csv")
     row.names(dat) <- dat[,1]
+    dat <- subset(dat, select = -X)
+    env_subset_corr <- dat
     
-    sals <- dat[26:27]
-    env <- dat[1:25]
-    
-    drop <- c("lat","long","stand","tree_farm","landowner","site_id","year","weather")
-    env <- env[,!(colnames(env) %in% drop)]
-    
-    env_cont <- env[,-1]
-    
-    #took out elevation, jul date (we already know theyre elevationally/temporally specific) 
-    drop <- c("jul_date","elev")
-    env_subset <- env_cont[,!(colnames(env_cont) %in% drop)]
-    
-    #add extra downed wood metrics to env subset
-    dwd_extra <- read.csv("dwd.extra.metrics.csv")
-    dwdsub <- dwd_extra[,c("dwd_dens","log_dens","stump_dens","avg_volume")]
-    env_subset_dwd <- cbind(env_subset, dwdsub)
-    
-    #load env df that was checked for correlations
-    env_subset_corr <- read.csv("env_subset_corr.csv")
-    
-    
-# sal presences absence
+    dat2 <- readRDS("site_level_matrix.rds")
+    sals <- dat2[26:27]
     oss_PA <- ifelse(sals$oss > 0, "Present", "Absent")
-    enes_PA <- ifelse(sals$enes > 0, "Present", "Absent")
+    enes_PA <- ifelse(sals$enes > 0, "Present", "Absent")  
+    
     
 ## oss random forest --------------------------------------------------------------------------------------------------
 
@@ -212,7 +226,7 @@ ggsave(filename = "oss_varimp_subset_dwd.png", plot = p5, device = "png",
       )
 
 
-ggsave(filename = "oss_varimp_subset_corr.png", plot = p5, device = "png",
+ggsave(filename = "oss_varimp_subset_0204.png", plot = p6, device = "png",
        path = "~/Library/CloudStorage/OneDrive-Personal/Documents/Academic/OSU/Git/habitat-analysis/figures/randomforest")
 
 
@@ -234,6 +248,11 @@ ggsave(filename = "oss_varimp_subset_corr.png", plot = p5, device = "png",
 #subset with extra dwd metrics
     enes.forest.subdwd <- randomForest(as.factor(enes_PA) ~ ., data=env_subset_dwd, ntree = 5000, mtry = 5, 
                                       importance=TRUE, keep.forest=FALSE, na.action=na.omit)  
+    
+#subset with env corr
+    enes.forest.corr <- randomForest(as.factor(enes_PA) ~ ., data=env_subset_corr, ntree = 5000, mtry = 5, 
+                                       importance=TRUE, keep.forest=FALSE, na.action=na.omit)  
+    
     
 ## plot - all variables ------------------------------------------------------------------------------------------------
     
@@ -312,13 +331,13 @@ ggsave(filename = "enes_varimp_subset.png", plot = p4, device = "png",
     
 ## plot - subset with dwd  --------------------------------------------------------------------------------------------------------
 
-    enesForestData.subdwd <- as.data.frame(importance(enes.forest.subdwd))
-    enesForestData.subdwd <- enesForestData.subdwd[order(enesForestData.subdwd[,1]),]
-    enesForestData.subdwd$Var.Names <- row.names(enesForestData.subdwd)
-    colnames(enesForestData.subdwd) <- c("Absent","Present","MeanDec","IncNodePurity","Var.Names")
+    enes.forest.corr <- as.data.frame(importance(enes.forest.corr))
+    enes.forest.corr <- enes.forest.corr[order(enes.forest.corr[,1]),]
+    enes.forest.corr$Var.Names <- row.names(enes.forest.corr)
+    colnames(enes.forest.corr) <- c("Absent","Present","MeanDec","IncNodePurity","Var.Names")
     
     #ggplot     
-    p6 <- ggplot(enesForestData.subdwd, aes(x = Var.Names, y = MeanDec)) +
+    p6 <- ggplot(enes.forest.corr, aes(x = Var.Names, y = MeanDec)) +
       geom_segment(aes(x = Var.Names, xend = Var.Names, y = 0, yend = MeanDec, 
                        color = ifelse(MeanDec > 15, ">15", 
                                       ifelse(MeanDec >= 10, "10-15", "<10"))), 
@@ -342,7 +361,7 @@ ggsave(filename = "enes_varimp_subset.png", plot = p4, device = "png",
       )
 
 
-ggsave(filename = "enes_varimp_subset_dwd.png", plot = p6, device = "png",
+ggsave(filename = "enes_varimp_subset_0204.png", plot = p6, device = "png",
        path = "~/Library/CloudStorage/OneDrive-Personal/Documents/Academic/OSU/Git/habitat-analysis/figures/randomforest")
 
     

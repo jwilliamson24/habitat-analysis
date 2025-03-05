@@ -94,7 +94,7 @@
               
         # habitat variability differs significantly across treatment groups
         # Since some treatment types have significantly higher or lower dispersion than others,
-        # this suggests that disturbances (wildfire, harvesting) influence habitat heterogeneity
+        # this suggests that disturbances influence habitat heterogeneity
     
     
     

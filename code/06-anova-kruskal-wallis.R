@@ -36,8 +36,8 @@
 ## load data ----------------------------------------------------------------------------------------------
 
 
-    dat <- read.csv("env_subset_corr.csv", row.names = 1)
-    dat2 <- readRDS("site_level_matrix.rds") #need this for the treatments
+    dat <- read.csv("covariate matrices/env_subset_corr.csv", row.names = 1)
+    dat2 <- readRDS("covariate matrices/site_level_matrix.rds") #need this for the treatments
     row.names(dat2) <- dat2[,1]
     dat2$trt <- as.factor(dat2$trt)
 
@@ -53,7 +53,7 @@
 # standardize
 
     dat_std <- decostand(dat, "standardize") #z-scores
-
+    dat$temp_sq <- sqrt(dat$temp)
 
 
 ## test for normality ----------------------------------------------------------------------------------------------
@@ -174,48 +174,63 @@
     names(tukey_results) <- c("temp_sq", "soil_moist", "dwd_count", "decay_cl")
     tukey_results
     
-          # $dwd_count
-          # Tukey multiple comparisons of means
-          # 95% family-wise confidence level
-          # 
-          # Fit: aov(formula = dat[[var]] ~ dat2$trt)
-          # 
-          # $`dat2$trt`
-          #            diff        lwr       upr     p adj
-          # BU-BS -17.807692 -26.753910 -8.861475 0.0000020 ***
-          # HB-BS  -2.800000 -11.831693  6.231693 0.9113655
-          # HU-BS  -1.259259 -10.125598  7.607079 0.9948848
-          # UU-BS -15.080000 -24.111693 -6.048307 0.0000916 ***
-          # HB-BU  15.007692   6.155005 23.860380 0.0000685 ***
-          # HU-BU  16.548433   7.864507 25.232359 0.0000057 ***
-          # UU-BU   2.727692  -6.124995 11.580380 0.9131645
-          # HU-HB   1.540741  -7.231217 10.312698 0.9884906
-          # UU-HB -12.280000 -21.219057 -3.340943 0.0020561 **
-          # UU-HU -13.820741 -22.592698 -5.048783 0.0002585 ***
-          # 
-          # 
-          # $decay_cl
-          # Tukey multiple comparisons of means
-          # 95% family-wise confidence level
-          # 
-          # Fit: aov(formula = dat[[var]] ~ dat2$trt)
-          # 
-          # $`dat2$trt`
-          #             diff         lwr         upr     p adj
-          # BU-BS  0.42596154  0.16559254  0.68633054 0.0001334 ***
-          # HB-BS  0.24550000 -0.01735666  0.50835666 0.0792753 .
-          # HU-BS -0.08101852 -0.33906275  0.17702571 0.9075524
-          # UU-BS  0.55750000  0.29464334  0.82035666 0.0000004 ***
-          # HB-BU -0.18046154 -0.43810847  0.07718540 0.3022904
-          # HU-BU -0.50698006 -0.75971538 -0.25424473 0.0000016 ***
-          # UU-BU  0.13153846 -0.12610847  0.38918540 0.6200937
-          # HU-HB -0.32651852 -0.58181590 -0.07122114 0.0050321 **
-          # UU-HB  0.31200000  0.05183938  0.57216062 0.0102347 *
-          # UU-HU  0.63851852  0.38322114  0.89381590 0.0000000 ***
-          #
-          # Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
     
-          
+## summarize anova/tukey results in table ---------------------------------------------------------------------
+    
+    # Create a function to format Tukey HSD results
+    format_tukey <- function(tukey_result) {
+      # Get the treatment comparisons
+      comparisons <- tukey_result[[1]]
+      
+      # If comparisons is a vector, convert it to a data frame
+      if (is.atomic(comparisons)) {
+        comparisons <- as.data.frame(comparisons)
+      }
+      
+      # Filter for significant comparisons (p < 0.05)
+      significant_comps <- comparisons[comparisons$p.adj < 0.05, ]
+      
+      # If no significant comparisons, return a message
+      if (nrow(significant_comps) == 0) {
+        return("No significant pairwise comparisons")
+      }
+      
+      # Format the significant comparisons
+      formatted_comps <- paste(
+        paste(significant_comps$comparison, "diff =", 
+              format(significant_comps$diff, digits = 3)),
+        collapse = "\n"
+      )
+      
+      return(formatted_comps)
+    }
+    
+    # Create the main table
+    anova_table <- data.frame(
+      Variable = names(anova_results),
+      F_value = sapply(anova_results, function(x) x[[1]]$`F value`[1]),
+      p_value = sapply(anova_results, function(x) x[[1]]$`Pr(>F)`[1])
+    )
+    
+    # Format p-values nicely
+    anova_table$p_value <- ifelse(
+      anova_table$p_value < 0.001,
+      "< 0.001",
+      format(anova_table$p_value, scientific = TRUE)
+    )
+    
+
+# Display the table
+    print(anova_table)
+    
+    # Variable    F_value      p_value        Tukey Significant Comparisons (added by hand, code wouldnt work)
+    # temp_sq     1.1091130    3.5540e-01
+    # soil_moist  0.6810519    6.0638e-01
+    # dwd_count   13.7254583    < 0.001       BU-BS \ UU-BS \ HB-BU \ HU-BU \ UU-HB \ UU-HU
+    # decay_cl    17.1435557    < 0.001       BU-BS \ UU-BS \ HU-BU \ HU-HB \ UU-HB \ UU-HU
+    
+     
+    
 ## kruskal-wallis -----------------------------------------------------------------------------------------------
     
     # non-parametric version of anove, using my non-normal vars:
@@ -235,7 +250,7 @@
     # (all except size cl)
     
     
-    
+   
 ## dunns -----------------------------------------------------------------------------------------------
     
 #Follow up with Dunn’s test (post hoc test for Kruskal-Wallis):
@@ -261,111 +276,87 @@
     dunn_results
     
     
-    # there are lots of significant comparisons here, need to interpret
+
+## format K-W and Dunn's results into table ------------------------------------------------------------
+# much of code sourced from phind    
     
-          # $canopy_cov
-          # Dunn (1964) Kruskal-Wallis multiple comparison
-          # p-values adjusted with the Holm method.
-          # 
-          # Comparison          Z      P.unadj        P.adj
-          # 1     BS - BU -5.7656890 8.132492e-09 4.066246e-08 ***
-          # 2     BS - HB  0.0000000 1.000000e+00 1.000000e+00
-          # 3     BU - HB  5.8266041 5.656660e-09 3.959662e-08 ***
-          # 4     BS - HU -0.1529876 8.784080e-01 1.000000e+00
-          # 5     BU - HU  5.7836359 7.310307e-09 4.386184e-08 ***
-          # 6     HB - HU -0.1546337 8.771101e-01 1.000000e+00
-          # 7     BS - UU -7.9926990 1.320162e-15 1.056129e-14 ***
-          # 8     BU - UU -2.3277105 1.992748e-02 7.970992e-02
-          # 9     HB - UU -8.0755271 6.718578e-16 6.718578e-15 ***
-          # 10    HU - UU -8.0747268 6.762788e-16 6.086509e-15 ***
-          # 
-          # $veg_cov
-          # Dunn (1964) Kruskal-Wallis multiple comparison
-          # p-values adjusted with the Holm method.
-          # 
-          # Comparison          Z      P.unadj        P.adj
-          # 1     BS - BU -4.1461939 3.380476e-05 0.0003380476 ***
-          # 2     BS - HB -0.2305423 8.176704e-01 0.8176704214
-          # 3     BU - HB  3.9547950 7.660032e-05 0.0006894029 ***
-          # 4     BS - HU -1.0914295 2.750839e-01 0.8252518134
-          # 5     BU - HU  3.1570707 1.593627e-03 0.0127490179 *
-          # 6     HB - HU -0.8658041 3.865976e-01 0.7731952072
-          # 7     BS - UU -2.2968370 2.162807e-02 0.1513964955
-          # 8     BU - UU  1.8467189 6.478789e-02 0.3239394382
-          # 9     HB - UU -2.0877077 3.682421e-02 0.2209452761
-          # 10    HU - UU -1.2616730 2.070665e-01 0.8282658933
-          # 
-          # $dwd_cov
-          # Dunn (1964) Kruskal-Wallis multiple comparison
-          # p-values adjusted with the Holm method.
-          # 
-          # Comparison          Z      P.unadj       P.adj
-          # 1     BS - BU  1.6980483 0.0894986547 0.536991928
-          # 2     BS - HB  3.5454378 0.0003919615 0.003919615 **
-          # 3     BU - HB  1.9011397 0.0572837177 0.400986024
-          # 4     BS - HU  1.0829655 0.2788237459 1.000000000
-          # 5     BU - HU -0.6436225 0.5198202784 1.000000000
-          # 6     HB - HU -2.5557996 0.0105944103 0.084755282 .
-          # 7     BS - UU  0.4082664 0.6830781000 0.683078100
-          # 8     BU - UU -1.2994666 0.1937838506 0.968919253
-          # 9     HB - UU -3.1696818 0.0015260594 0.013734535 .
-          # 10    HU - UU -0.6742625 0.5001444346 1.000000000
-          # 
-          # $fwd_cov
-          # Dunn (1964) Kruskal-Wallis multiple comparison
-          # p-values adjusted with the Holm method.
-          # 
-          # Comparison          Z      P.unadj        P.adj
-          # 1     BS - BU  2.0378464 4.156529e-02 1.662612e-01
-          # 2     BS - HB  5.4397523 5.335471e-08 4.268377e-07 ***
-          # 3     BU - HB  3.4903698 4.823526e-04 3.376468e-03 **
-          # 4     BS - HU -0.9927208 3.208460e-01 9.625381e-01
-          # 5     BU - HU -3.1129717 1.852138e-03 1.111283e-02 .
-          # 6     HB - HU -6.6042236 3.996059e-11 3.996059e-10 ***
-          # 7     BS - UU -0.2250784 8.219183e-01 8.219183e-01
-          # 8     BU - UU -2.2890061 2.207900e-02 1.103950e-01
-          # 9     HB - UU -5.7235352 1.043300e-08 9.389697e-08 ***
-          # 10    HU - UU  0.7716590 4.403164e-01 8.806329e-01
-          # 
-          # $size_cl
-          # NULL
-          # 
-          # $char_cl
-          # Dunn (1964) Kruskal-Wallis multiple comparison
-          # p-values adjusted with the Holm method.
-          # 
-          # Comparison          Z      P.unadj        P.adj
-          # 1     BS - BU -0.8813160 3.781468e-01 7.562936e-01
-          # 2     BS - HB -2.7806286 5.425377e-03 2.170151e-02 .
-          # 3     BU - HB -1.9462268 5.162750e-02 1.548825e-01
-          # 4     BS - HU  4.7332616 2.209405e-06 1.104702e-05 ***
-          # 5     BU - HU  5.7406230 9.432888e-09 6.603022e-08 ***
-          # 6     HB - HU  7.6471509 2.054811e-14 1.849330e-13 ***
-          # 7     BS - UU  5.2448207 1.564344e-07 9.386061e-07 ***
-          # 8     BU - UU  6.2415003 4.333935e-10 3.467148e-09 ***
-          # 9     HB - UU  8.1086168 5.119923e-16 5.119923e-15 ***
-          # 10    HU - UU  0.6159296 5.379410e-01 5.379410e-01
-          # 
-          # $avg_volume
-          # Dunn (1964) Kruskal-Wallis multiple comparison
-          # p-values adjusted with the Holm method.
-          # 
-          # Comparison          Z      P.unadj        P.adj
-          # 1     BS - BU -0.2682586 7.885003e-01 0.7885002978
-          # 2     BS - HB  1.6206957 1.050829e-01 0.5254146291
-          # 3     BU - HB  1.9245595 5.428449e-02 0.3257069252
-          # 4     BS - HU  1.0384166 2.990761e-01 0.8972283985
-          # 5     BU - HU  1.3365905 1.813563e-01 0.7254253684
-          # 6     HB - HU -0.6190946 5.358540e-01 1.0000000000
-          # 7     BS - UU -2.3648086 1.803939e-02 0.1443151444
-          # 8     BU - UU -2.1415332 3.223106e-02 0.2256174481
-          # 9     HB - UU -4.0268059 5.653967e-05 0.0005653967 ***
-          # 10    HU - UU -3.4844192 4.932063e-04 0.0044388564 ***
-          #
-          # Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+# organize K-W results
+    
+    # Create a data frame with the test statistics
+    results_table <- data.frame(
+      Variable = names(kruskal_results),
+      Chi_Squared = sapply(kruskal_results, function(x) x$statistic),
+      p_value = sapply(kruskal_results, function(x) x$p.value),
+      Effect_Size = sapply(kruskal_results, function(x) 
+        format(x$statistic / (sum(!is.na(dat[[names(kruskal_results)[1]]]) & 
+                                    !is.na(dat2$trt)) * (length(unique(dat2$trt)) - 1)), digits = 3))
+    )
+    
+    # Format p-values nicely
+    results_table$p_value <- ifelse(
+      results_table$p_value < 0.001,
+      "< 0.001",
+      format(results_table$p_value, scientific = TRUE)
+    )
+    
+    # Sort by chi-squared value (strongest to weakest effect)
+    results_table <- results_table[order(-results_table$Chi_Squared), ]
+    
+
+# organize Dunn's results    
+    
+    # Create a function to get Dunn's test comparisons
+    get_dunn_comparisons <- function(var_name) {
+      clean_var_name <- gsub("\\.Kruskal-Wallis chi-squared", "", var_name)
+      
+      if (!is.null(dunn_results[[clean_var_name]])) {
+        df <- dunn_results[[clean_var_name]]$res        # Get the data frame from the dunnTest object
+        comparisons <- paste(df$Comparison, "p =", format(df$P.adj, scientific = TRUE))        # Create comparison strings
+        return(paste(comparisons, collapse = "\n"))        # Return all significant comparisons
+      }
+      return("Not significant")
+    }
+    
+    # Add Dunn's test results to the table
+    results_table$Dunn_Comparisons <- sapply(
+      rownames(results_table),
+      function(x) get_dunn_comparisons(x)
+    )
     
     
+    # Create a function to format the comparisons nicely
+    format_comparisons <- function(comparisons) {
+      comp_lines <- strsplit(comparisons, "\n")[[1]]      # Split the comparisons string into individual lines
+      comparisons_only <- gsub(" p = .*", "", comp_lines)       # Extract just the comparison names and p-values
+      p_values <- as.numeric(gsub(".*p = ", "", comp_lines))
+      significant_comps <- comparisons_only[p_values < 0.05]   # Filter for significant comparisons (p < 0.05)
+
+      # If no significant comparisons, return a message
+      if (length(significant_comps) == 0) {
+        return("Comparisons: No significant pairwise comparisons")
+      }
+      return(paste("Comparisons:", paste(significant_comps, collapse = "\n")))   # Return formatted significant comparisons
+    }
     
+    # Create a new table with formatted comparisons
+    results_table$Dunn_Comparisons <- sapply(
+      results_table$Dunn_Comparisons,
+      function(x) format_comparisons(x)
+    )
+    
+
+# Display the full table
+    print(results_table)
+    
+    
+    # Variable     Chi_Squared     p_value    Effect_Size    Dunn_Comparisons
+    # canopy_cov   119.8949828     < 0.001       0.236       Comparisons: BS - BU\nBU - HB\nBU - HU\nBS - UU\nHB - UU\nHU - UU
+    # char_cl      103.8020187     < 0.001       0.204       Comparisons: BS - HB\nBS - HU\nBU - HU\nHB - HU\nBS - UU\nBU - UU\nHB - UU
+    # fwd_cov      55.5070828      < 0.001       0.109       Comparisons: BS - HB\nBU - HB\nBU - HU\nHB - HU\nHB - UU
+    # veg_cov      23.7868232      < 0.001      0.0468       Comparisons: BS - BU\nBU - HB\nBU - HU
+    # avg_volume   19.2191300      < 0.001      0.0378       Comparisons: HB - UU\nHU - UU
+    # dwd_cov      15.6389435     3.543e-03     0.0308       Comparisons: BS - HB\nHB - UU
+    # size_cl      0.7071337      9.504e-01    0.00139       Comparisons: Not significant
     
     
     

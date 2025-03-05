@@ -16,7 +16,7 @@
 
 # treatments are statistically significantly different from each other
 # 30.9% of the variation in habitat data can be explained by treatment
-# there are significant differences in habitat composition between each treatment pair
+# there are significant differences in habitat composition between every possible treatment pair
 
 ## settings -----------------------------------------------------------------------------------------------
 

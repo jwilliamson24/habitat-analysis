@@ -219,6 +219,9 @@
       format(anova_table$p_value, scientific = TRUE)
     )
     
+    # add significant col
+    anova_table$significant <- c("FALSE","FALSE","TRUE","TRUE")
+    
 
 # Display the table
     print(anova_table)
@@ -229,7 +232,29 @@
     # dwd_count   13.7254583    < 0.001       BU-BS \ UU-BS \ HB-BU \ HU-BU \ UU-HB \ UU-HU
     # decay_cl    17.1435557    < 0.001       BU-BS \ UU-BS \ HU-BU \ HU-HB \ UU-HB \ UU-HU
     
-     
+ 
+    
+    
+## visualize     ---------------------------------------------------------------------
+    
+    
+    ggplot(anova_table, aes(x = Variable, y = F_value)) +
+      geom_col(aes(fill = significant), position = "identity") +
+      theme_minimal() +
+      labs(
+        title = "ANOVA Results",
+        x = "Variable",
+        y = "F-value"
+      ) +
+      theme(
+        axis.text.x = element_text(angle = 45, hjust = 1),
+        legend.position = "none"
+      ) +
+      scale_fill_manual(values = c("gray", "steelblue"))
+    
+    
+    
+    
     
 ## kruskal-wallis -----------------------------------------------------------------------------------------------
     
@@ -358,7 +383,21 @@
     # dwd_cov      15.6389435     3.543e-03     0.0308       Comparisons: BS - HB\nHB - UU
     # size_cl      0.7071337      9.504e-01    0.00139       Comparisons: Not significant
     
+    results_table$Effect_Size <- as.numeric(results_table$Effect_Size)
     
-    
-    
+    ggplot(results_table, aes(x = reorder(Variable, Effect_Size), y = Effect_Size)) +
+      geom_bar(stat = "identity", width = 0.6, fill = "steelblue") +
+      coord_flip() +
+      theme_minimal() +
+      theme(
+        axis.title = element_text(size = 12),
+        axis.text = element_text(size = 10),
+        panel.grid.minor = element_blank(),
+        panel.grid.major.y = element_blank()
+      ) +
+      labs(
+        title = "Effect Sizes of Variables",
+        x = "Variables",
+        y = "Effect Size"
+      )  
     

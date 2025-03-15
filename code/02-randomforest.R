@@ -50,12 +50,12 @@
     
 ## load data (updated 02/04/2025) ----------------------------------------------------------------------------
     
-    dat <- read.csv("env_subset_corr.csv")
+    dat <- read.csv("covariate matrices/env_subset_corr.csv")
     row.names(dat) <- dat[,1]
     dat <- subset(dat, select = -X)
     env_subset_corr <- dat
     
-    dat2 <- readRDS("site_level_matrix.rds")
+    dat2 <- readRDS("covariate matrices/site_level_matrix.rds")
     sals <- dat2[26:27]
     oss_PA <- ifelse(sals$oss > 0, "Present", "Absent")
     enes_PA <- ifelse(sals$enes > 0, "Present", "Absent")  
@@ -194,39 +194,53 @@ ggsave(filename = "oss_varimp_subset.png", plot = p2, device = "png",
 ggsave(filename = "oss_varimp_subset_dwd.png", plot = p5, device = "png",
        path = "~/Library/CloudStorage/OneDrive-Personal/Documents/Academic/OSU/Git/habitat-analysis/figures/randomforest")
 
-## final plot - subset with env data checked for correlations -----------------------------------------------------------------
+## updated plot - subset with env data checked for correlations -----------------------------------------------------------------
 
     ossForestData.corr <- as.data.frame(importance(oss.forest.corr))
     ossForestData.corr <- ossForestData.corr[order(ossForestData.corr[,1]),]
     ossForestData.corr$Var.Names <- row.names(ossForestData.corr)
     colnames(ossForestData.corr) <- c("Absent","Present","MeanDec","IncNodePurity","Var.Names")
     
+    
+    new_names <- c("size_cl"="size class", "temp"="temp", "aspect"="aspect", "char_cl"="char class", 
+                   "precip_mm"="precip", "fwd_cov"="fine woody debris", "dwd_cov"="dwd cover",
+                   "dwd_count"="dwd count", "avg_volume"="dwd volume", "soil_moist"="soil moisture",
+                   "decay_cl"="decay class", "days_since_rain"="days since rain", "canopy_cov"="canopy cover",
+                   "veg_cov"="veg cover")
+    ossForestData.corr$Var.Names <- new_names[ossForestData.corr$Var.Names]
+    ossForestData.corr <- ossForestData.corr[order(-ossForestData.corr$MeanDec), ]
+    
+    
     #ggplot     
-    p6 <- ggplot(ossForestData.corr, aes(x = Var.Names, y = MeanDec)) +
-      geom_segment(aes(x = Var.Names, xend = Var.Names, y = 0, yend = MeanDec, 
-                       color = ifelse(MeanDec > 15, ">15", 
-                                      ifelse(MeanDec >= 10, "10-15", "<10"))), 
-                   show.legend = FALSE) +
-      geom_point(aes(size = IncNodePurity, 
-                     color = ifelse(MeanDec > 15, ">15", 
-                                    ifelse(MeanDec >= 10, "10-15", "<10"))), 
-                 alpha = 0.6) +
-      theme_light() +
-      coord_flip() +
-      scale_color_manual(values = c(">15" = "blue", "10-15" = "#66C2A5", "<10" = "#FFD700")) +
-      labs(color = "Range", size = "Node Purity") +
-      theme(
-        text = element_text(size = 20)
-      ) +
-      labs(
-        title = "Variable Importance from Random Forest Model - OSS",
-        x = "Environmental Variables",
-        y = "Mean Decrease in Accuracy",
-        size = "Node Purity"
-      )
+    p6 <- ggplot(ossForestData.corr, aes(x = reorder(Var.Names, MeanDec, FUN = min), y = MeanDec)) +
+            geom_segment(aes(x = reorder(Var.Names, MeanDec, FUN = min), 
+                             xend = reorder(Var.Names, MeanDec, FUN = min), 
+                             y = 0, yend = MeanDec, 
+                             color = ifelse(MeanDec > 15, ">15", ifelse(MeanDec >= 10, "10-15", "<10"))), 
+                             show.legend = FALSE) +
+            geom_point(aes(size = IncNodePurity, 
+                           color = ifelse(MeanDec > 15, ">15", ifelse(MeanDec >= 10, "10-15", "<10"))), 
+                           alpha = 0.6) +
+            theme_light() +
+            coord_flip() +
+            scale_color_manual(values = c(">15" = "blue", "10-15" = "forestgreen", "<10" = "orange")) +
+            labs(color = "Importance Level", size = "Node Purity") +
+            theme(
+              text = element_text(size = 24),
+              plot.title = element_text(size = 28, face = "bold"),
+              axis.title = element_text(size = 26),
+              legend.text = element_text(size = 22),
+              legend.title = element_text(size = 24)
+            ) +
+            labs(
+              title = "Random Forest Variable Importance - BAWR",
+              x = "",
+              y = "Mean Decrease in Accuracy",
+              size = "Node Purity"
+            )
 
 
-ggsave(filename = "oss_varimp_subset_0204.png", plot = p6, device = "png",
+ggsave(filename = "oss_varimp_subset_0314.png", plot = p6, device = "png",
        path = "~/Library/CloudStorage/OneDrive-Personal/Documents/Academic/OSU/Git/habitat-analysis/figures/randomforest")
 
 
@@ -329,39 +343,54 @@ ggsave(filename = "enes_varimp.png", plot = p3, device = "png",
 ggsave(filename = "enes_varimp_subset.png", plot = p4, device = "png",
            path = "~/Library/CloudStorage/OneDrive-Personal/Documents/Academic/OSU/Git/habitat-analysis/figures/randomforest")
     
-## plot - subset with dwd  --------------------------------------------------------------------------------------------------------
+## updated plot - subset with dwd  --------------------------------------------------------------------------------------------------------
 
     enes.forest.corr <- as.data.frame(importance(enes.forest.corr))
     enes.forest.corr <- enes.forest.corr[order(enes.forest.corr[,1]),]
     enes.forest.corr$Var.Names <- row.names(enes.forest.corr)
     colnames(enes.forest.corr) <- c("Absent","Present","MeanDec","IncNodePurity","Var.Names")
     
+    
+    new_names <- c("size_cl"="size class", "temp"="temp", "aspect"="aspect", "char_cl"="char class", 
+                   "precip_mm"="precip", "fwd_cov"="fine woody debris", "dwd_cov"="dwd cover",
+                   "dwd_count"="dwd count", "avg_volume"="dwd volume", "soil_moist"="soil moisture",
+                   "decay_cl"="decay class", "days_since_rain"="days since rain", "canopy_cov"="canopy cover",
+                   "veg_cov"="veg cover")
+    enes.forest.corr$Var.Names <- new_names[enes.forest.corr$Var.Names]
+    enes.forest.corr <- enes.forest.corr[order(-enes.forest.corr$MeanDec), ]
+    
+    
+    
     #ggplot     
-    p6 <- ggplot(enes.forest.corr, aes(x = Var.Names, y = MeanDec)) +
-      geom_segment(aes(x = Var.Names, xend = Var.Names, y = 0, yend = MeanDec, 
-                       color = ifelse(MeanDec > 15, ">15", 
-                                      ifelse(MeanDec >= 10, "10-15", "<10"))), 
-                   show.legend = FALSE) +
-      geom_point(aes(size = IncNodePurity, 
-                     color = ifelse(MeanDec > 15, ">15", 
-                                    ifelse(MeanDec >= 10, "10-15", "<10"))), 
-                 alpha = 0.6) +
-      theme_light() +
-      coord_flip() +
-      scale_color_manual(values = c(">15" = "blue", "10-15" = "#66C2A5", "<10" = "#FFD700")) +
-      labs(color = "Range", size = "Node Purity") +
-      theme(
-        text = element_text(size = 20)
-      ) +
-      labs(
-        title = "Variable Importance from Random Forest Model - enes",
-        x = "Environmental Variables",
-        y = "Mean Decrease in Accuracy",
-        size = "Node Purity"
-      )
+    p7 <- ggplot(enes.forest.corr, aes(x = reorder(Var.Names, MeanDec, FUN = min), y = MeanDec)) +
+              geom_segment(aes(x = reorder(Var.Names, MeanDec, FUN = min), 
+                               xend = reorder(Var.Names, MeanDec, FUN = min), 
+                               y = 0, yend = MeanDec, 
+                               color = ifelse(MeanDec > 15, ">15", ifelse(MeanDec >= 10, "10-15", "<10"))), 
+                           show.legend = FALSE) +
+              geom_point(aes(size = IncNodePurity, 
+                             color = ifelse(MeanDec > 15, ">15", ifelse(MeanDec >= 10, "10-15", "<10"))), 
+                         alpha = 0.6) +
+              theme_light() +
+              coord_flip() +
+              scale_color_manual(values = c(">15" = "blue", "10-15" = "forestgreen", "<10" = "orange")) +
+              labs(color = "Importance Level", size = "Node Purity") +
+              theme(
+                text = element_text(size = 24),
+                plot.title = element_text(size = 28, face = "bold"),
+                axis.title = element_text(size = 26),
+                legend.text = element_text(size = 22),
+                legend.title = element_text(size = 24)
+              ) +
+              labs(
+                title = "Random Forest Variable Importance - ENES",
+                x = "",
+                y = "Mean Decrease in Accuracy",
+                size = "Node Purity"
+              )
 
 
-ggsave(filename = "enes_varimp_subset_0204.png", plot = p6, device = "png",
+ggsave(filename = "enes_varimp_subset_0314.png", plot = p7, device = "png",
        path = "~/Library/CloudStorage/OneDrive-Personal/Documents/Academic/OSU/Git/habitat-analysis/figures/randomforest")
 
     

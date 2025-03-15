@@ -35,8 +35,8 @@
 ## load data ----------------------------------------------------------------------------------------------
 
 
-    dat <- read.csv("env_subset_corr.csv", row.names = 1)
-    dat2 <- readRDS("site_level_matrix.rds") #need this for the treatments
+    dat <- read.csv("covariate matrices/env_subset_corr.csv", row.names = 1)
+    dat2 <- readRDS("covariate matrices/site_level_matrix.rds") #need this for the treatments
     row.names(dat2) <- dat2[,1]
 
 
@@ -106,14 +106,39 @@
     
 ## plot --------------------------------------------------------------------------          
     
+    #retrieve data from beta disp output list
+    distances <- permdisp_result$distances
+    treatments <- permdisp_result$group    
+    plot_data <- data.frame(distance=distances, trt = treatments)
+    
+    # rename and reorder treatments
+    trt.order <- c("UU","BU","HB","HU","BS")
+    plot_data$trt <- factor(plot_data$trt, levels = trt.order)
+    
+    new.names <- c("UU" = "Control","BU" = "Burned","HU" = "Harvest","HB" = "Harvest,Burn", "BS" = "Salvage")
+    plot_data$trt <- factor(plot_data$trt, levels = names(new.names), labels = new.names)
+    
+    
+    
 # boxplot of variances by treatment
     
+    
+    box.colors <- c('lightgreen','steelblue', 'coral2', '#f9d62e', '#b967ff' )
+    
     png("~/Library/CloudStorage/OneDrive-Personal/Documents/Academic/OSU/Git/habitat-analysis/figures/beta-disp/permdisp_boxplot.png",
-        width = 800, height = 600)  
-    boxplot(permdisp_result$distances ~ treatment_labels, 
+        width = 800, height = 600)
+    boxplot(distances ~ trt, 
+            data = plot_data,
             main = "Beta Dispersion by Treatment",
             ylab = "Distance to Median", xlab = "Treatment Type",
-            col = "lightgray", border = "black")
+            col = box.colors,           # Use custom colors
+            border = "black",
+            frame.plot = TRUE,         # Add frame around plot
+            outpch = 19,               # Change outlier symbol style
+            outcex = 0.8,
+            cex.main = 1.5,
+            cex.lab = 1.4,
+            cex.axis = 1.2)
     dev.off()  
   
     

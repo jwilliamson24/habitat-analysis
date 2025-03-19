@@ -23,6 +23,7 @@
 # kruskal-wallis : canopy cov, veg cov, dwd cov, fwd cov, char cl, avg vol significantly differ among trts
 # lots of significant difference in site pairs, not sure what to do with that info
 
+# added avg dwd count per subplot just to see; its the same as the site-level sum dwd count, both highly significant
 
 ## settings -----------------------------------------------------------------------------------------------
 
@@ -31,7 +32,7 @@
     library(vegan)
     library(car)
     library(FSA)
-    
+    library(ggplot2)
 
 ## load data ----------------------------------------------------------------------------------------------
 
@@ -49,6 +50,7 @@
     # took out aspect, precip, days since rain
 
     dat <- dat[,-c(11:13)]
+    dat$avg_dwd_count <- (dat$dwd_count/7)
 
 # standardize
 
@@ -140,11 +142,11 @@
     
     # using soil moist, dwd count, decay cl, temp_sq
     
-    anova_results <- lapply(c("temp_sq", "soil_moist", "dwd_count", "decay_cl"), function(var) {
+    anova_results <- lapply(c("temp_sq", "soil_moist", "dwd_count", "decay_cl", "avg_dwd_count"), function(var) {
       model <- aov(dat[[var]] ~ dat2$trt)
       summary(model)
     })
-    names(anova_results) <- c("temp_sq", "soil_moist", "dwd_count", "decay_cl")
+    names(anova_results) <- c("temp_sq", "soil_moist", "dwd_count", "decay_cl","avg_dwd_count")
     anova_results
   
     
@@ -237,6 +239,7 @@
     
 ## visualize     ---------------------------------------------------------------------
     
+    # F-value barplot
     
     ggplot(anova_table, aes(x = Variable, y = F_value)) +
       geom_col(aes(fill = significant), position = "identity") +
@@ -254,11 +257,9 @@
     
     
     
-    
-    
 ## kruskal-wallis -----------------------------------------------------------------------------------------------
     
-    # non-parametric version of anove, using my non-normal vars:
+    # non-parametric version of anova, using my non-normal vars:
     # canopy cov, veg cov, dwd cov, fwd cov, size cl, char cl, avg vol
     
     

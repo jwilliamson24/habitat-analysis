@@ -20,6 +20,7 @@
 # HU has the highest dispersion (2.992), meaning greater habitat variability
 # The first few PCoA axes capture most of the variation in habitat dispersion
 
+# tukey: only HU and HB are signif different in dispersion
 # Since some treatment types have significantly higher or lower dispersion than others,
 # this suggests that disturbances may influence habitat heterogeneity
 
@@ -101,10 +102,10 @@
     TukeyHSD(permdisp_result)
     
         # which treatments differ from each other significantly in their variance
-    
+        # only HU and HB
 
     
-## plot --------------------------------------------------------------------------          
+## data to plot --------------------------------------------------------------------------          
     
     #retrieve data from beta disp output list
     distances <- permdisp_result$distances
@@ -115,12 +116,13 @@
     trt.order <- c("UU","BU","HB","HU","BS")
     plot_data$trt <- factor(plot_data$trt, levels = trt.order)
     
-    new.names <- c("UU" = "Control","BU" = "Burned","HU" = "Harvest","HB" = "Harvest,Burn", "BS" = "Salvage")
-    plot_data$trt <- factor(plot_data$trt, levels = names(new.names), labels = new.names)
+    new.names <- c("UU" = "Control","BU" = "Burned","HB" = "Harvest/Burn", "HU" = "Harvest","BS" = "Salvage")
+    plot_data1$trt <- factor(plot_data$trt, levels = names(new.names), labels = new.names)
     
     
+## plots  --------------------------------------------------------------------------          
     
-# boxplot of variances by treatment
+    #boxplot of variances by treatment
     
     
     box.colors <- c('lightgreen','steelblue', 'coral2', '#f9d62e', '#b967ff' )
@@ -128,7 +130,7 @@
     png("~/Library/CloudStorage/OneDrive-Personal/Documents/Academic/OSU/Git/habitat-analysis/figures/beta-disp/permdisp_boxplot.png",
         width = 800, height = 600)
     boxplot(distances ~ trt, 
-            data = plot_data,
+            data = plot_data1,
             main = "Beta Dispersion by Treatment",
             ylab = "Distance to Median", xlab = "Treatment Type",
             col = box.colors,           # Use custom colors
@@ -143,7 +145,7 @@
   
     
 
-# multivariate plot of PCoA axes with dispersion visualizations
+    # multivariate plot of PCoA axes with dispersion visualizations
     
     png("~/Library/CloudStorage/OneDrive-Personal/Documents/Academic/OSU/Git/habitat-analysis/figures/beta-disp/permdisp_pcoa_plot.png", 
         width = 800, height = 600)  
@@ -155,6 +157,41 @@
     # ellipses show variability within each group
     
     
+    
+## fancy plot with comparison brackets   ----------------------------------------------------------------------
+    
+    # format data
+    treatments <- permdisp_result$group    
+    plot_data <- data.frame(distance=distances, trt = treatments)
+    
+    # rename and reorder treatments
+    trt.order <- c("UU","BU","HB","HU","BS") 
+    plot_data$trt <- factor(plot_data$trt, levels = trt.order)
+    new.names <- c("UU" = "Control","BU" = "Burned","HB" = "Harvest/Burn", 
+                   "HU" = "Harvest","BS" = "Salvage")
+    plot_data$trt <- factor(plot_data$trt, levels = names(new.names), labels = new.names)
+   
+    box.colors <- c('lightgreen','steelblue', 'coral2', '#f9d62e', '#b967ff' )
+    
+# plot
+    
+    ggplot(plot_data, aes(y = distances, x = trt, fill=trt)) +
+      geom_boxplot(linewidth = 0.7) +
+      scale_fill_manual(values=box.colors, breaks = NULL) +  # Added breaks = NULL
+      stat_compare_means(method = "wilcox.test", 
+                         comparisons = list(c("Harvest/Burn", "Harvest")), 
+                         label = "p.signif",
+                         p.adjust.method = "holm")+
+      theme_bw() +
+      theme(axis.text = element_text(size = 15),
+            axis.title = element_text(size = 20),
+            panel.grid = element_blank(),
+            legend.position = "none") +  # Added to remove legend
+      theme(plot.title = element_text(hjust = 0.5, size = 25)) + 
+      labs(title = "Beta Dispersion by Treatment", y = "Dispersion", x = "")
+    
+    ggsave("~/Library/CloudStorage/OneDrive-Personal/Documents/Academic/OSU/Git/habitat-analysis/figures/beta-disp/permdisp_boxplot.png", 
+           width = 10, height = 8, dpi = 300)
     
     
     

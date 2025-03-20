@@ -80,8 +80,9 @@
       theme_bw() +
       theme(axis.text = element_text(size = 15),
             axis.title = element_text(size = 20),
-            panel.grid = element_blank()) +
-      labs(y = "Treatment",
+            panel.grid = element_blank(),
+            legend.position= "none") +
+      labs(y = "",
            x = "Downed wood count")
     
     

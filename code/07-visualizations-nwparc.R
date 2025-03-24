@@ -69,7 +69,8 @@
    ggplot(dat2, aes(y = trt, x = dwd_count, fill=trt)) +
       geom_boxplot(linewidth = 0.7) +
       scale_fill_manual(values=box.colors) +
-      stat_compare_means(method = "wilcox.test", comparisons = list_comparisons, label = "p.signif",
+      stat_compare_means(method = "wilcox.test", method.args = list(exact = FALSE), 
+                         comparisons = list_comparisons, label = "p.signif",
                          p.adjust.method = "holm",
                          label.y = c(82,78,75, -3, 1, 5), # horizontal adjustment
                          tip.length = c(0.03, 0.03, 0.03, -0.03, -0.03, -0.03), # direction of bracket
@@ -86,7 +87,94 @@
            x = "Downed wood count")
     
     
-   ggsave("~/Library/CloudStorage/OneDrive-Personal/Documents/Academic/OSU/Git/oss-occu/figures/dwd-trt-comparisons.png", 
+   ggsave("~/Library/CloudStorage/OneDrive-Personal/Documents/Academic/OSU/Git/habitat-analysis/figures/dwd-trt-comparisons.png", 
           width = 10, height = 8, dpi = 300)
+   
     
+## veg cover boxplot  ------------------------------------------------------------------------------------------
+   
+
+   ## Make a list of the boxplot levels you want compared
+   list_comparisons <- list(c("BU", "BS"),
+                            c("HB", "BU"),
+                            c("HU", "BU"))
+  
+   
+   # fancy boxplot
+   
+   box.colors <- c(
+     "UU" = 'lightgreen',
+     "BU" = 'steelblue',
+     "HB" = 'coral2',
+     "HU" = '#f9d62e',
+     "BS" = '#b967ff'
+   )
+   
+   ggplot(dat2, aes(y = trt, x = veg_cov, fill=trt)) +
+     geom_boxplot(linewidth = 0.7) +
+     scale_fill_manual(values=box.colors) +
+     stat_compare_means(method = "wilcox.test", method.args = list(exact = FALSE),
+                        comparisons = list_comparisons, label = "p.signif",
+                        p.adjust.method = "holm") +
+     scale_y_discrete(
+       limits = c("BS", "HU", "HB", "BU", "UU"),
+       labels = c("Salvage", "Harvest", "Harvest/Burn", "Burn", "Control")) +
+     theme_bw() +
+     theme(axis.text = element_text(size = 15),
+           axis.title = element_text(size = 20),
+           panel.grid = element_blank(),
+           legend.position= "none") +
+     labs(y = "",
+          x = "Veg cover")
+   
+   
+   ggsave("~/Library/CloudStorage/OneDrive-Personal/Documents/Academic/OSU/Git/habitat-analysis/figures/veg-trt-comparisons.png", 
+          width = 10, height = 8, dpi = 300)
+   
+   
+   
+   
+## decay class boxplot  ------------------------------------------------------------------------------------------
+   
+   ## Make a list of the boxplot levels you want compared
+   list_comparisons <- list(c("BU", "BS"),
+                            c("UU", "BS"),
+                            c("HU", "HB"),
+                            c("UU", "HB"),
+                            c("UU", "HU"),
+                            c("HU", "BU"))
+   
+   
+   # fancy boxplot
+   
+   box.colors <- c(
+     "UU" = 'lightgreen',
+     "BU" = 'steelblue',
+     "HB" = 'coral2',
+     "HU" = '#f9d62e',
+     "BS" = '#b967ff'
+   )
+   
+   ggplot(dat2, aes(y = trt, x = decay_cl, fill=trt)) +
+     geom_boxplot(linewidth = 0.7) +
+     scale_fill_manual(values=box.colors) +
+     stat_compare_means(method = "wilcox.test", method.args = list(exact = FALSE),
+                        comparisons = list_comparisons, label = "p.signif",
+                        p.adjust.method = "holm") +
+     scale_y_discrete(
+       limits = c("BS", "HU", "HB", "BU", "UU"),
+       labels = c("Salvage", "Harvest", "Harvest/Burn", "Burn", "Control")) +
+     theme_bw() +
+     theme(axis.text = element_text(size = 15),
+           axis.title = element_text(size = 20),
+           panel.grid = element_blank(),
+           legend.position= "none") +
+     labs(y = "",
+          x = "Decay class")
+   
+   
+   ggsave("~/Library/CloudStorage/OneDrive-Personal/Documents/Academic/OSU/Git/habitat-analysis/figures/decay-trt-comparisons.png", 
+          width = 10, height = 8, dpi = 300)
+   
+   
    

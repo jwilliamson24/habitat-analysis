@@ -33,8 +33,8 @@
 
 ## load data ----------------------------------------------------------------------------------------------
 
-    dat <- read.csv("env_subset_corr.csv", row.names = 1)
-    dat2 <- readRDS("site_level_matrix.rds") #need this for the treatments
+    dat <- read.csv("covariate matrices/env_subset_corr.csv", row.names = 1)
+    dat2 <- readRDS("covariate matrices/site_level_matrix.rds") #need this for the treatments
     row.names(dat2) <- dat2[,1]
     
  
@@ -150,12 +150,23 @@
     pt_col <- viridis(length(groups))
     site.sc <- scores(env.pcoa, choices=c(1,2))
     
-    
     png(filename = "~/Library/CloudStorage/OneDrive-Personal/Documents/Academic/OSU/Git/habitat-analysis/figures/pcoa/pcoa_0206.png",
         width = 1200, height = 1000, res = 150)
     
+    # Define custom colors - replace these with your preferred colors
+    custom_colors <- c(
+      "#EE6A50",  # Light red
+      "#66B2FF",  # Steel blue
+      "#99FF99",  # Light green
+      "#F8D531",  # Light yellow
+      "#CC99FF"   # Light purple
+    )
+    
+    # Ensure we have enough colors for all groups
+    pt_col <- custom_colors[1:length(groups)]
    
-    plot(site.sc[, 1:2],  # First two dimensions
+    # First two dimensions
+    plot(site.sc[, 1:2],  
          main = "Env PCoA", 
          xlab = "PCoA 1", 
          ylab = "PCoA 2", 
@@ -163,7 +174,7 @@
          xlim = c(min(site.sc[,1]) - 0.3, max(site.sc[,1]) + 0.3),  # Adjust limits if needed
          ylim = c(min(site.sc[,2]) - 0.3, max(site.sc[,2]) + 0.3))  # Adjust limits if needed
           
-    
+    # add points
     for (i in 1:length(groups))
     {
       dim_choice <- site.sc[dat2$trt==groups[i],]
@@ -172,7 +183,7 @@
              cex=1.4, 
              col=pt_col[i])
       
-      # Calculate and add convex hull for the group
+      # add polygons
       chull_points <- dim_choice[chull(dim_choice[, 1], dim_choice[, 2]), ]
       
       polygon(chull_points[, 1], chull_points[, 2], 
@@ -181,17 +192,18 @@
               lwd=2)
     }
     
-    text(env.sc*3.5, row.names(env.sc),
-         cex = 1.5)
     arrows(0, 0, env.sc[,1]*2, env.sc[,2]*2, 
            lwd=2, 
            length=0.1,
            cex= 1.5)
-    legend(x="bottomleft", 
-           legend=levels(factor(dat2$trt)), 
-           col=pt_col[1:6], 
-           pch=19, 
-           cex=1.2)
+    
+    # text(env.sc*3.5, row.names(env.sc),
+    #      cex = 1.5)
+    # legend(x="bottomleft", 
+    #        legend=levels(factor(dat2$trt)), 
+    #        col=pt_col[1:6], 
+    #        pch=19, 
+    #        cex=1.2)
     
 
     dev.off() 

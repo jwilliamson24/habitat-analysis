@@ -75,7 +75,7 @@
     pairwise_result <- pairwise.adonis(dat_std, dat2$trt, sim.method = "euclidean", perm = 999)
     print(pairwise_result)
     
-            # pairs Df SumsOfSqs   F.Model        R2 p.value p.adjusted sig
+            #         pairs Df SumsOfSqs   F.Model        R2 p.value p.adjusted sig
             #   1  BS vs HB  1  49.14050  7.154337 0.1321101   0.001       0.01   *
             #   2  BS vs UU  1 155.94449 19.549777 0.2937617   0.001       0.01   *
             #   3  BS vs HU  1  38.86383  4.428321 0.0828834   0.001       0.01   *

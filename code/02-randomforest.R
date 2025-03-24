@@ -240,9 +240,36 @@ ggsave(filename = "oss_varimp_subset_dwd.png", plot = p5, device = "png",
             )
 
 
-ggsave(filename = "oss_varimp_subset_0314.png", plot = p6, device = "png",
+ggsave(filename = "oss-RF.png", plot = p6, device = "png",
        path = "~/Library/CloudStorage/OneDrive-Personal/Documents/Academic/OSU/Git/habitat-analysis/figures/randomforest")
 
+# with single color 
+
+      p6 <- ggplot(ossForestData.corr, aes(x = reorder(Var.Names, MeanDec, FUN = min), y = MeanDec)) +
+        geom_segment(aes(x = reorder(Var.Names, MeanDec, FUN = min), 
+                         xend = reorder(Var.Names, MeanDec, FUN = min), 
+                         y = 0, yend = MeanDec),
+                     color = "blue",
+                     show.legend = FALSE) +
+        geom_point(aes(size = IncNodePurity),
+                   color = "blue",
+                   alpha = 0.6) +
+        theme_light() +
+        coord_flip() +
+        labs(color = "Importance Level", size = "Node Purity") +
+        theme(
+          text = element_text(size = 24),
+          plot.title = element_text(size = 28, face = "bold"),
+          axis.title = element_text(size = 26),
+          legend.text = element_text(size = 22),
+          legend.title = element_text(size = 24)
+        ) +
+        labs(
+          title = "Random Forest Variable Importance - BAWR",
+          x = "",
+          y = "Mean Decrease in Accuracy",
+          size = "Node Purity"
+        )
 
 ## enes random forest --------------------------------------------------------------------------------------------------
     
@@ -390,7 +417,34 @@ ggsave(filename = "enes_varimp_subset.png", plot = p4, device = "png",
               )
 
 
-ggsave(filename = "enes_varimp_subset_0314.png", plot = p7, device = "png",
+ggsave(filename = "enes-RF.png", plot = p7, device = "png",
        path = "~/Library/CloudStorage/OneDrive-Personal/Documents/Academic/OSU/Git/habitat-analysis/figures/randomforest")
 
     
+# with single color
+      p7 <- ggplot(enes.forest.corr, aes(x = reorder(Var.Names, MeanDec, FUN = min), y = MeanDec)) +
+        geom_segment(aes(x = reorder(Var.Names, MeanDec, FUN = min), 
+                         xend = reorder(Var.Names, MeanDec, FUN = min), 
+                         y = 0, yend = MeanDec),
+                     color = "blue",
+                     show.legend = FALSE) +
+        geom_point(aes(size = IncNodePurity),
+                   color = "blue",
+                   alpha = 0.6) +
+        theme_light() +
+        coord_flip() +
+        labs(color = "Importance Level", size = "Node Purity") +
+        theme(
+          text = element_text(size = 24),
+          plot.title = element_text(size = 28, face = "bold"),
+          axis.title = element_text(size = 26),
+          legend.text = element_text(size = 22),
+          legend.title = element_text(size = 24)
+        ) +
+        labs(
+          title = "Random Forest Variable Importance - ENES",
+          x = "",
+          y = "Mean Decrease in Accuracy",
+          size = "Node Purity"
+        )
+

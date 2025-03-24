@@ -49,11 +49,11 @@
     
   ## Make a list of the boxplot levels you want compared
     list_comparisons <- list(c("BU", "BS"),
-                             c("UU", "BS"),
+                             #c("UU", "BS"),
                              c("HB", "BU"),
-                             c("HU", "BU"),
-                             c("UU", "HB"),
-                             c("UU", "HU"))
+                             c("HU", "BU"))
+                             #c("UU", "HB"),
+                             #c("UU", "HU"))
     
 
   # fancy boxplot
@@ -71,10 +71,10 @@
       scale_fill_manual(values=box.colors) +
       stat_compare_means(method = "wilcox.test", method.args = list(exact = FALSE), 
                          comparisons = list_comparisons, label = "p.signif",
-                         p.adjust.method = "holm",
-                         label.y = c(82,78,75, -3, 1, 5), # horizontal adjustment
-                         tip.length = c(0.03, 0.03, 0.03, -0.03, -0.03, -0.03), # direction of bracket
-                         vjust = c(4,0,0,1.1,0,0,1,0,0,0.5,0,0,4,0,0,4,0,0)) + # placement of asterisks
+                         p.adjust.method = "holm")+
+                         # label.y = c(82,78,75, -3, 1, 5), # horizontal adjustment
+                         # tip.length = c(0.03, 0.03, 0.03, -0.03, -0.03, -0.03), # direction of bracket
+                         # vjust = c(4,0,0,1.1,0,0,1,0,0,0.5,0,0,4,0,0,4,0,0)) + # placement of asterisks
       scale_y_discrete(
         limits = c("BS", "HU", "HB", "BU", "UU"),
         labels = c("Salvage", "Harvest", "Harvest/Burn", "Burn", "Control")) +
@@ -138,10 +138,10 @@
    
    ## Make a list of the boxplot levels you want compared
    list_comparisons <- list(c("BU", "BS"),
-                            c("UU", "BS"),
+                            #c("UU", "BS"),
                             c("HU", "HB"),
-                            c("UU", "HB"),
-                            c("UU", "HU"),
+                            #c("UU", "HB"),
+                            #c("UU", "HU"),
                             c("HU", "BU"))
    
    

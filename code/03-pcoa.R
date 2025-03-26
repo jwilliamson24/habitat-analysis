@@ -150,16 +150,17 @@
     pt_col <- viridis(length(groups))
     site.sc <- scores(env.pcoa, choices=c(1,2))
     
-    png(filename = "~/Library/CloudStorage/OneDrive-Personal/Documents/Academic/OSU/Git/habitat-analysis/figures/pcoa/pcoa_0206.png",
+    png(filename = "~/Library/CloudStorage/OneDrive-Personal/Documents/Academic/OSU/Git/habitat-analysis/figures/pcoa/pcoa_0325.png",
         width = 1200, height = 1000, res = 150)
     
     # Define custom colors - replace these with your preferred colors
     custom_colors <- c(
-      "#EE6A50",  # Light red
+      "#CC99FF",   # Light purple
       "#66B2FF",  # Steel blue
-      "#99FF99",  # Light green
+      "#EE6A50",  # Light red
       "#F8D531",  # Light yellow
-      "#CC99FF"   # Light purple
+      "#99FF99"  # Light green
+      
     )
     
     # Ensure we have enough colors for all groups
